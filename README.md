@@ -54,6 +54,13 @@ Find and eliminate unused subscriptions before they become ghosts.
 - **Multi-Tenant Isolation** - User-scoped database queries
 - **Database Branching** - Separate dev/prod databases
 
+### Phase 9: Production Stack
+- **Token Auto-Refresh** - Silent refresh of expired Google tokens
+- **Resend** - Transactional emails (Zombie Alerts, Trial Expiry)
+- **Stripe** - Subscription billing with webhooks
+- **Plaid Repair** - Re-authentication flow for broken connections
+- **PostHog** - Product analytics & event tracking
+
 ## Tech Stack
 
 | Layer | Technology |
@@ -107,6 +114,10 @@ cp .env.example .env.local
 | `TURSO_AUTH_TOKEN` | Turso auth token |
 | `OPENAI_API_KEY` | OpenAI API key (optional) |
 | `SENTRY_DSN` | Sentry DSN (optional) |
+| `RESEND_API_KEY` | Resend API key for emails |
+| `STRIPE_SECRET_KEY` | Stripe secret key |
+| `STRIPE_WEBHOOK_SECRET` | Stripe webhook secret |
+| `NEXT_PUBLIC_POSTHOG_KEY` | PostHog project key |
 
 ## Project Structure
 
@@ -118,7 +129,8 @@ src/
 │   │   ├── cron/zombie-alerts/  # Daily zombie check
 │   │   ├── email-usage/        # Gmail API
 │   │   ├── negotiate/           # LLM negotiation
-│   │   └── plaid/              # Plaid integration
+│   │   ├── plaid/              # Plaid integration
+│   │   └── stripe/              # Stripe webhooks
 │   ├── auth/
 │   │   ├── signin/             # Sign-in page
 │   │   └── error/              # Error page
@@ -130,7 +142,7 @@ src/
 │   ├── ActionButtons.tsx        # Kill & Downgrade buttons
 │   ├── DashboardCards.tsx       # Total Bleed, Stat Cards
 │   ├── OnboardingEmptyState.tsx # Welcome flow
-│   ├── PlaidLink.tsx           # Bank connection
+│   ├── PlaidLink.tsx           # Bank connection + repair
 │   ├── SmartNegotiator.tsx     # AI negotiation
 │   ├── Sparkline.tsx           # Usage trends
 │   ├── StatusBadge.tsx         # Status indicators
@@ -143,13 +155,16 @@ src/
 │   └── migrate.ts             # Migration runner
 ├── lib/
 │   ├── analytics.ts            # Clustering, scoring
-│   ├── data.ts                # Mock data
-│   ├── db-queries.ts          # Multi-tenant queries
-│   ├── encryption.ts           # AES-256 token encryption
+│   ├── analytics-client.tsx    # PostHog analytics
+│   ├── data.ts                 # Mock data
+│   ├── db-queries.ts           # Multi-tenant queries
+│   ├── encryption.ts            # AES-256 token encryption
+│   ├── email.ts                # Resend transactional emails
+│   ├── stripe.ts               # Stripe billing utilities
 │   └── toast.ts               # Toast utilities
 ├── types/
-│   └── subscriptions.ts       # TypeScript interfaces
-├── auth.ts                     # NextAuth config
+│   └── subscriptions.ts        # TypeScript interfaces
+├── auth.ts                     # NextAuth config + token refresh
 └── sentry.client.config.ts     # Sentry config
 ```
 
@@ -259,6 +274,24 @@ See [TESTING.md](./TESTING.md) for:
 - Uses OpenAI GPT-4 or Anthropic Claude
 - Generates custom retention negotiation scripts
 - Falls back to template if no API key
+
+### Stripe (Subscriptions)
+- Checkout sessions for Pro plans
+- Webhook handlers for subscription lifecycle
+- Customer portal integration
+
+### Resend (Emails)
+- Zombie Alert notifications
+- Trial Expiry warnings
+- Welcome emails
+
+### PostHog (Analytics)
+Tracks key events:
+- `Subscription Killed` - When user cancels a subscription
+- `Bank Connected` - When user links bank account
+- `Gmail Connected` - When user authorizes Gmail
+- `Negotiation Used` - When user generates retention script
+- `Goal Reached` - When savings goal is achieved
 
 ## Privacy
 
