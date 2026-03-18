@@ -2,7 +2,7 @@
 
 ## Current State
 
-**Project Status**: ✅ Phase 1 MVP Complete
+**Project Status**: ✅ Phase 3 Complete
 
 GhostCheck is a subscription audit tool that identifies unused subscriptions ("ghosts") by comparing payment data with usage patterns.
 
@@ -15,6 +15,8 @@ GhostCheck is a subscription audit tool that identifies unused subscriptions ("g
 - [x] Memory bank documentation
 - [x] Recipe system for common features
 - [x] GhostCheck Phase 1 MVP ("Financial Detective")
+- [x] Phase 2: Kill buttons, tier optimization, retention risk
+- [x] Phase 3: Sparklines, Zombie Alerts, Category Stack, Found Money
 
 ## Current Structure
 
@@ -26,7 +28,10 @@ GhostCheck is a subscription audit tool that identifies unused subscriptions ("g
 | `src/components/StatusBadge.tsx` | Ghost/Warning/Healthy status badges | ✅ |
 | `src/components/DashboardCards.tsx` | Total Bleed, Stat Cards, Renewal Countdown | ✅ |
 | `src/components/SubscriptionList.tsx` | All subscriptions list with status | ✅ |
+| `src/components/Sparkline.tsx` | Usage trend visualization | ✅ |
+| `src/components/ActionButtons.tsx` | Kill & Downgrade buttons | ✅ |
 | `src/app/page.tsx` | Main dashboard | ✅ |
+| `src/app/api/email-usage/route.ts` | Gmail API placeholder | ✅ |
 
 ## Features Implemented
 
@@ -37,12 +42,23 @@ GhostCheck is a subscription audit tool that identifies unused subscriptions ("g
 - **Ghost Detection**: Uses decay function Score = Usage_Days(Last_30) / Cost_Per_Month
 - **Vampire Alert**: Highlights unused subscriptions with potential savings
 
+### Phase 2: Executioner
+- **Kill this Ghost button**: Opens direct cancellation URL in new tab
+- **Tier Optimization**: Suggests cheaper plans (Adobe Photography: $35/mo savings)
+- **Retention Risk Score**: Predicts which subs are about to become ghosts
+
+### Phase 3: Hardening
+- **Usage Sparklines**: 60-day usage trend visualization on each card
+- **Zombie Alert**: Detects charges after cancellation (simulated: Hulu, Gym)
+- **The Stack**: Category spending breakdown with insights
+- **Found Money**: Tracks actual savings from cancelled subscriptions
+
 ## Current Focus
 
-Working application with mock data. Next steps:
-1. Add real Plaid API integration for transaction data
-2. Add browser extension for usage tracking
-3. Add email receipt scraping
+Working application with mock data. Ready for real API integrations:
+1. Plaid API for real transaction data
+2. Gmail OAuth for email activity
+3. Browser extension for usage tracking
 
 ## Session History
 
@@ -50,11 +66,13 @@ Working application with mock data. Next steps:
 |------|---------|
 | Initial | Template created with base setup |
 | Mar 2026 | Built GhostCheck Phase 1 MVP |
+| Mar 2026 | Phase 2: Kill buttons, tier optimization |
+| Mar 2026 | Phase 3: Sparklines, Zombie Alerts, Stack View |
 
 ## Pending Improvements
 
 - [ ] Add Plaid API integration
 - [ ] Add browser extension for usage tracking
-- [ ] Add email receipt scraper
-- [ ] Add direct cancellation deep links
+- [ ] Add Gmail OAuth flow
 - [ ] Add virtual card integration (Privacy.com)
+- [ ] Add push notifications
