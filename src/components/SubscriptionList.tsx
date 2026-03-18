@@ -1,5 +1,6 @@
 import { ClusteredSubscription } from '../types/subscriptions';
 import { StatusBadge } from './StatusBadge';
+import { KillButton, DowngradeButton } from './ActionButtons';
 import { getDaysUntilRenewal } from '../lib/analytics';
 
 function getDaysSinceLastUse(lastUsedDate?: string): number {
@@ -7,6 +8,20 @@ function getDaysSinceLastUse(lastUsedDate?: string): number {
   const now = new Date('2026-03-18');
   const lastUsed = new Date(lastUsedDate);
   return Math.floor((now.getTime() - lastUsed.getTime()) / (1000 * 60 * 60 * 24));
+}
+
+function RiskIndicator({ score }: { score: number }) {
+  if (score === 0) return null;
+  
+  const color = score > 0.5 ? 'text-red-600' : score > 0.25 ? 'text-amber-600' : 'text-green-600';
+  const label = score > 0.5 ? 'High churn risk' : score > 0.25 ? 'Declining usage' : 'Stable';
+  
+  return (
+    <span className={`${color} flex items-center gap-1`}>
+      <span className="text-xs">📉</span>
+      {label}
+    </span>
+  );
 }
 
 export function SubscriptionList({ subscriptions }: { subscriptions: ClusteredSubscription[] }) {
@@ -24,6 +39,7 @@ export function SubscriptionList({ subscriptions }: { subscriptions: ClusteredSu
         {sortedSubs.map(sub => {
           const daysSinceUse = getDaysSinceLastUse(sub.lastUsedDate);
           const daysUntilRenewal = getDaysUntilRenewal(sub.nextBillingDate);
+          const showActions = sub.status === 'ghost' || sub.suggestedTier;
           
           return (
             <div key={sub.id} className="p-4 hover:bg-slate-50 transition-colors">
@@ -37,7 +53,7 @@ export function SubscriptionList({ subscriptions }: { subscriptions: ClusteredSu
                     <div className="text-sm text-slate-500">{sub.category}</div>
                   </div>
                 </div>
-                <div className="flex items-center gap-6">
+                <div className="flex items-center gap-4">
                   <div className="text-right">
                     <div className="font-bold text-slate-800">${sub.monthlyCost}</div>
                     <div className="text-xs text-slate-500">per month</div>
@@ -45,7 +61,7 @@ export function SubscriptionList({ subscriptions }: { subscriptions: ClusteredSu
                   <StatusBadge status={sub.status} />
                 </div>
               </div>
-              <div className="mt-3 flex items-center gap-4 text-sm">
+              <div className="mt-3 flex items-center gap-4 text-sm flex-wrap">
                 <span className="text-slate-500">
                   Last used: {daysSinceUse === 999 ? 'Unknown' : daysSinceUse === 0 ? 'Today' : `${daysSinceUse} days ago`}
                 </span>
@@ -53,6 +69,12 @@ export function SubscriptionList({ subscriptions }: { subscriptions: ClusteredSu
                 <span className="text-slate-500">
                   Renews in {daysUntilRenewal} days
                 </span>
+                {sub.riskScore > 0 && (
+                  <>
+                    <span className="text-slate-400">•</span>
+                    <RiskIndicator score={sub.riskScore} />
+                  </>
+                )}
                 {sub.status === 'ghost' && (
                   <>
                     <span className="text-slate-400">•</span>
@@ -62,6 +84,16 @@ export function SubscriptionList({ subscriptions }: { subscriptions: ClusteredSu
                   </>
                 )}
               </div>
+              {showActions && (
+                <div className="mt-3 flex items-center gap-2 flex-wrap">
+                  {sub.status === 'ghost' && (
+                    <KillButton cancelUrl={sub.cancelUrl} subscriptionName={sub.name} />
+                  )}
+                  {sub.suggestedTier && sub.status !== 'ghost' && (
+                    <DowngradeButton tier={sub.suggestedTier} websiteUrl={sub.websiteUrl} />
+                  )}
+                </div>
+              )}
             </div>
           );
         })}

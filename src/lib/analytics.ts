@@ -1,4 +1,4 @@
-import { ClusteredSubscription, DashboardStats, Transaction, Subscription } from '../types/subscriptions';
+import { ClusteredSubscription, DashboardStats, Transaction, Subscription, TierOption } from '../types/subscriptions';
 import { mockTransactions, subscriptionTemplates } from './data';
 
 function normalizeMerchantName(name: string): string {
@@ -25,6 +25,7 @@ export function clusterTransactions(transactions: Transaction[]): ClusteredSubsc
           transactions: [],
           totalSpent: 0,
           ghostScore: 0,
+          riskScore: 0,
           status: 'active'
         });
       }
@@ -50,6 +51,34 @@ export function calculateGhostScore(subscription: ClusteredSubscription): number
   return usageRatio;
 }
 
+export function calculateRetentionRisk(usageHistory?: number[]): number {
+  if (!usageHistory || usageHistory.length < 2) return 0;
+  
+  const recentMonths = usageHistory.slice(0, 2);
+  const olderMonths = usageHistory.slice(2, 4);
+  
+  if (olderMonths.length === 0 || recentMonths.every(m => m === 0)) return 1;
+  
+  const recentAvg = recentMonths.reduce((a, b) => a + b, 0) / recentMonths.length;
+  const olderAvg = olderMonths.reduce((a, b) => a + b, 0) / olderMonths.length;
+  
+  if (olderAvg === 0) return recentAvg === 0 ? 1 : 0;
+  
+  const decline = (olderAvg - recentAvg) / olderAvg;
+  return Math.max(0, Math.min(1, decline));
+}
+
+export function findBestTier(subscription: ClusteredSubscription): TierOption | undefined {
+  if (!subscription.tiers || subscription.tiers.length === 0) return undefined;
+  
+  const bestTier = subscription.tiers.reduce((best, tier) => {
+    if (tier.savings > (best?.savings || 0)) return tier;
+    return best;
+  }, subscription.tiers[0]);
+  
+  return bestTier.savings > 0 ? bestTier : undefined;
+}
+
 export function determineStatus(subscription: ClusteredSubscription): 'active' | 'ghost' | 'warning' | 'healthy' {
   const score = calculateGhostScore(subscription);
   
@@ -70,8 +99,12 @@ export function analyzeSubscriptions(): DashboardStats {
   
   const analyzed = clustered.map(sub => {
     const ghostScore = calculateGhostScore(sub);
+    const riskScore = calculateRetentionRisk(sub.usageHistory);
     const status = determineStatus(sub);
-    return { ...sub, ghostScore, status };
+    const suggestedTier = findBestTier(sub);
+    const potentialSavings = suggestedTier ? suggestedTier.savings : 0;
+    
+    return { ...sub, ghostScore, riskScore, status, suggestedTier, potentialSavings };
   });
 
   const totalMonthly = analyzed.reduce((sum, sub) => sum + sub.monthlyCost, 0);
