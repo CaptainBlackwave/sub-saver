@@ -5,6 +5,7 @@ import { useState, useCallback } from 'react';
 interface PlaidLinkButtonProps {
   onSuccess?: (publicToken: string, metadata: PlaidLinkMetadata) => void;
   onExit?: () => void;
+  isRepairMode?: boolean;
 }
 
 interface PlaidLinkMetadata {
@@ -19,7 +20,7 @@ interface PlaidLinkMetadata {
   }>;
 }
 
-export function PlaidLinkButton({ onSuccess, onExit }: PlaidLinkButtonProps) {
+export function PlaidLinkButton({ onSuccess, onExit, isRepairMode = false }: PlaidLinkButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
 
@@ -27,7 +28,11 @@ export function PlaidLinkButton({ onSuccess, onExit }: PlaidLinkButtonProps) {
     setIsLoading(true);
     
     try {
-      const response = await fetch('/api/plaid/create-link-token', {
+      const endpoint = isRepairMode 
+        ? '/api/plaid/update-link-token' 
+        : '/api/plaid/create-link-token';
+      
+      const response = await fetch(endpoint, {
         method: 'POST',
       });
       
@@ -63,9 +68,9 @@ export function PlaidLinkButton({ onSuccess, onExit }: PlaidLinkButtonProps) {
       console.error('Plaid error:', error);
       setIsLoading(false);
     }
-  }, [onSuccess, onExit]);
+  }, [onSuccess, onExit, isRepairMode]);
 
-  if (isConnected) {
+  if (isConnected && !isRepairMode) {
     return (
       <div className="flex items-center gap-2 px-3 py-1.5 bg-green-100 text-green-700 text-sm rounded-lg">
         <span>✓</span>
@@ -78,17 +83,21 @@ export function PlaidLinkButton({ onSuccess, onExit }: PlaidLinkButtonProps) {
     <button
       onClick={handlePlaidOpen}
       disabled={isLoading}
-      className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white text-sm rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50"
+      className={`px-3 py-1.5 text-sm rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50 ${
+        isRepairMode 
+          ? 'bg-amber-100 hover:bg-amber-200 text-amber-700' 
+          : 'bg-slate-800 hover:bg-slate-700 text-white'
+      }`}
     >
       {isLoading ? (
         <>
           <span className="animate-spin">⟳</span>
-          <span>Connecting...</span>
+          <span>{isRepairMode ? 'Repairing...' : 'Connecting...'}</span>
         </>
       ) : (
         <>
-          <span>🏦</span>
-          <span>Connect Bank</span>
+          <span>{isRepairMode ? '🔧' : '🏦'}</span>
+          <span>{isRepairMode ? 'Repair Connection' : 'Connect Bank'}</span>
         </>
       )}
     </button>
@@ -105,4 +114,45 @@ interface PlaidHandler {
   open: () => void;
   exit: () => void;
   destroy: () => void;
+}
+
+export function PlaidConnectionStatus({ 
+  status, 
+  onRepair 
+}: { 
+  status: 'connected' | 'needs_repair' | 'error';
+  onRepair?: () => void;
+}) {
+  if (status === 'connected') {
+    return (
+      <div className="flex items-center gap-2 px-3 py-1.5 bg-green-100 text-green-700 text-sm rounded-lg">
+        <span>✓</span>
+        <span>Bank Connected</span>
+      </div>
+    );
+  }
+
+  if (status === 'needs_repair') {
+    return (
+      <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 px-3 py-1.5 bg-amber-100 text-amber-700 text-sm rounded-lg">
+          <span>⚠️</span>
+          <span>Re-authentication needed</span>
+        </div>
+        <button
+          onClick={onRepair}
+          className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white text-sm rounded-lg transition-colors"
+        >
+          Repair
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-2 px-3 py-1.5 bg-red-100 text-red-700 text-sm rounded-lg">
+      <span>✕</span>
+      <span>Connection Error</span>
+    </div>
+  );
 }
