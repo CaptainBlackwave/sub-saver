@@ -1,17 +1,51 @@
 import { sqliteTable, text, integer, real } from "drizzle-orm/sqlite-core";
 
+function generateId(): string {
+  return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+}
+
+export const accounts = sqliteTable("accounts", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull(),
+  type: text("type").notNull(),
+  provider: text("provider").notNull(),
+  providerAccountId: text("provider_account_id").notNull(),
+  refresh_token: text("refresh_token"),
+  access_token: text("access_token"),
+  expires_at: integer("expires_at"),
+  token_type: text("token_type"),
+  scope: text("scope"),
+  id_token: text("id_token"),
+  session_state: text("session_state"),
+  plaidAccessTokenEncrypted: text("plaid_access_token_encrypted"),
+  plaidItemId: text("plaid_item_id"),
+});
+
+export const sessions = sqliteTable("sessions", {
+  id: text("id").primaryKey(),
+  sessionToken: text("session_token").notNull(),
+  userId: text("user_id").notNull(),
+  expires: integer("expires", { mode: "timestamp" }).notNull(),
+});
+
+export const verificationTokens = sqliteTable("verification_tokens", {
+  identifier: text("identifier").notNull(),
+  token: text("token").notNull(),
+  expires: integer("expires", { mode: "timestamp" }).notNull(),
+});
+
 export const users = sqliteTable("users", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
-  email: text("email").notNull().unique(),
+  id: text("id").primaryKey(),
   name: text("name"),
-  plaidAccessToken: text("plaid_access_token"),
-  googleRefreshToken: text("google_refresh_token"),
+  email: text("email").notNull().unique(),
+  emailVerified: integer("email_verified", { mode: "timestamp" }),
+  image: text("image"),
   createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
 });
 
 export const subscriptions = sqliteTable("subscriptions", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
-  userId: integer("user_id").notNull().references(() => users.id),
+  id: text("id").primaryKey().$defaultFn(() => generateId()),
+  userId: text("user_id").notNull(),
   name: text("name").notNull(),
   merchantVariants: text("merchant_variants"),
   monthlyCost: real("monthly_cost").notNull(),
@@ -27,9 +61,9 @@ export const subscriptions = sqliteTable("subscriptions", {
 });
 
 export const events = sqliteTable("events", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
-  userId: integer("user_id").notNull().references(() => users.id),
-  subscriptionId: integer("subscription_id").references(() => subscriptions.id),
+  id: text("id").primaryKey().$defaultFn(() => generateId()),
+  userId: text("user_id").notNull(),
+  subscriptionId: text("subscription_id"),
   eventType: text("event_type").notNull(),
   amount: real("amount"),
   description: text("description"),
@@ -37,8 +71,8 @@ export const events = sqliteTable("events", {
 });
 
 export const goals = sqliteTable("goals", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
-  userId: integer("user_id").notNull().references(() => users.id),
+  id: text("id").primaryKey().$defaultFn(() => generateId()),
+  userId: text("user_id").notNull(),
   name: text("name").notNull(),
   targetAmount: real("target_amount").notNull(),
   currentAmount: real("current_amount").notNull().default(0),
@@ -47,8 +81,8 @@ export const goals = sqliteTable("goals", {
 });
 
 export const trials = sqliteTable("trials", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
-  userId: integer("user_id").notNull().references(() => users.id),
+  id: text("id").primaryKey().$defaultFn(() => generateId()),
+  userId: text("user_id").notNull(),
   name: text("name").notNull(),
   merchantName: text("merchant_name"),
   monthlyCostAfterTrial: real("monthly_cost_after_trial"),
