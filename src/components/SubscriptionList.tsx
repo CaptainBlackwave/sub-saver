@@ -1,3 +1,5 @@
+'use client';
+
 import { ClusteredSubscription } from '../types/subscriptions';
 import { StatusBadge } from './StatusBadge';
 import { KillButton, DowngradeButton } from './ActionButtons';
