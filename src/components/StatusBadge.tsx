@@ -1,5 +1,5 @@
 interface StatusBadgeProps {
-  status: 'active' | 'ghost' | 'warning' | 'healthy' | 'pending_cancel' | 'zombie';
+  status: 'active' | 'ghost' | 'warning' | 'healthy' | 'pending_cancel' | 'zombie' | 'trial';
 }
 
 export function StatusBadge({ status }: StatusBadgeProps) {
@@ -10,6 +10,7 @@ export function StatusBadge({ status }: StatusBadgeProps) {
     active: 'bg-blue-100 text-blue-700 border-blue-200',
     pending_cancel: 'bg-purple-100 text-purple-700 border-purple-200',
     zombie: 'bg-red-100 text-red-700 border-red-200',
+    trial: 'bg-green-100 text-green-700 border-green-200',
   };
 
   const labels: Record<string, string> = {
@@ -19,6 +20,7 @@ export function StatusBadge({ status }: StatusBadgeProps) {
     active: 'Active',
     pending_cancel: '⏳ Pending Cancel',
     zombie: '🧟 Zombie',
+    trial: '🛡️ Trial',
   };
 
   return (

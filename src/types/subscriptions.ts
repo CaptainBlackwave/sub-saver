@@ -33,7 +33,7 @@ export interface ClusteredSubscription extends Subscription {
   totalSpent: number;
   ghostScore: number;
   riskScore: number;
-  status: 'active' | 'ghost' | 'warning' | 'healthy' | 'pending_cancel' | 'zombie';
+  status: 'active' | 'ghost' | 'warning' | 'healthy' | 'pending_cancel' | 'zombie' | 'trial';
   suggestedTier?: TierOption;
   potentialSavings?: number;
   cancelDate?: string;
@@ -48,6 +48,9 @@ export interface DashboardStats {
   subscriptions: ClusteredSubscription[];
   foundMoneyTotal: number;
   categorySpending: CategorySpending[];
+  healthScore: number;
+  trials: TrialSubscription[];
+  goalProgress: GoalProgress;
 }
 
 export interface CategorySpending {
@@ -71,4 +74,29 @@ export interface UserCancellations {
     cancelDate: string;
     expectedSavings: number;
   };
+}
+
+export interface TrialSubscription {
+  id: string;
+  name: string;
+  merchantName: string;
+  monthlyCostAfterTrial: number;
+  trialEndDate: string;
+  daysUntilExpiry: number;
+  logo?: string;
+}
+
+export interface GoalProgress {
+  goalName: string;
+  targetAmount: number;
+  currentAmount: number;
+  percentComplete: number;
+  ghostsNeeded: number;
+}
+
+export interface NegotiationScript {
+  subscriptionName: string;
+  script: string;
+  talkingPoints: string[];
+  expectedSavings: number;
 }

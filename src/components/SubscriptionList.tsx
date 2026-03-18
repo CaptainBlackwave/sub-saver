@@ -2,6 +2,7 @@ import { ClusteredSubscription } from '../types/subscriptions';
 import { StatusBadge } from './StatusBadge';
 import { KillButton, DowngradeButton } from './ActionButtons';
 import { UsageTrend } from './Sparkline';
+import { SmartNegotiatorButton } from './SmartNegotiator';
 import { getDaysUntilRenewal } from '../lib/analytics';
 
 function getDaysSinceLastUse(lastUsedDate?: string): number {
@@ -93,6 +94,9 @@ export function SubscriptionList({ subscriptions }: { subscriptions: ClusteredSu
                   )}
                   {sub.suggestedTier && sub.status !== 'ghost' && (
                     <DowngradeButton tier={sub.suggestedTier} websiteUrl={sub.websiteUrl} />
+                  )}
+                  {sub.riskScore >= 0.25 && sub.status !== 'ghost' && (
+                    <SmartNegotiatorButton subscription={sub} />
                   )}
                 </div>
               )}

@@ -1,4 +1,4 @@
-import { ClusteredSubscription, DashboardStats, Transaction, Subscription, TierOption, CategorySpending, ZombieAlert, UserCancellations } from '../types/subscriptions';
+import { ClusteredSubscription, DashboardStats, Transaction, Subscription, TierOption, CategorySpending, ZombieAlert, UserCancellations, TrialSubscription, GoalProgress, NegotiationScript } from '../types/subscriptions';
 import { mockTransactions, subscriptionTemplates } from './data';
 
 const userCancellations: UserCancellations = {
@@ -214,6 +214,9 @@ export function analyzeSubscriptions(): DashboardStats {
 
   const categorySpending = calculateCategorySpending(analyzed);
   const foundMoney = calculateFoundMoney();
+  const healthScore = calculateHealthScore(analyzed, totalAnnual);
+  const trials = getActiveTrials();
+  const goalProgress = calculateGoalProgress(analyzed, foundMoney);
 
   return {
     totalMonthly,
@@ -223,7 +226,84 @@ export function analyzeSubscriptions(): DashboardStats {
     upcomingRenewals,
     subscriptions: analyzed,
     foundMoneyTotal: foundMoney,
-    categorySpending
+    categorySpending,
+    healthScore,
+    trials,
+    goalProgress
+  };
+}
+
+export function calculateHealthScore(subscriptions: ClusteredSubscription[], totalAnnual: number): number {
+  if (totalAnnual === 0) return 100;
+  
+  const wastedSpend = subscriptions
+    .filter(s => s.status === 'ghost')
+    .reduce((sum, s) => sum + s.monthlyCost * 12, 0);
+  
+  const score = Math.round(100 * (1 - wastedSpend / totalAnnual));
+  return Math.max(0, Math.min(100, score));
+}
+
+export function getActiveTrials(): TrialSubscription[] {
+  const now = new Date('2026-03-18');
+  const mockTrials = [
+    { id: 't1', name: 'Claude Pro', merchantName: 'ANTHROPIC', monthlyCostAfterTrial: 20, trialEndDate: '2026-03-22', logo: 'C' },
+    { id: 't2', name: 'Figma Professional', merchantName: 'FIGMA', monthlyCostAfterTrial: 15, trialEndDate: '2026-03-25', logo: 'F' },
+  ];
+  
+  return mockTrials.map(trial => {
+    const endDate = new Date(trial.trialEndDate);
+    const daysUntilExpiry = Math.floor((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    return { ...trial, daysUntilExpiry };
+  });
+}
+
+export function calculateGoalProgress(subscriptions: ClusteredSubscription[], foundMoney: number): GoalProgress {
+  const goalName = 'Vacation Fund';
+  const targetAmount = 2000;
+  const currentAmount = foundMoney;
+  
+  const ghostSavings = subscriptions
+    .filter(s => s.status === 'ghost')
+    .reduce((sum, s) => sum + s.monthlyCost * 12, 0);
+  
+  const percentComplete = Math.round((currentAmount / targetAmount) * 100);
+  const ghostsNeeded = Math.ceil((targetAmount - currentAmount) / 100);
+  
+  return {
+    goalName,
+    targetAmount,
+    currentAmount,
+    percentComplete: Math.min(100, percentComplete),
+    ghostsNeeded
+  };
+}
+
+export function generateNegotiationScript(subscription: ClusteredSubscription): NegotiationScript {
+  const daysSinceUse = subscription.lastUsedDate 
+    ? Math.floor((new Date('2026-03-18').getTime() - new Date(subscription.lastUsedDate).getTime()) / (1000 * 60 * 60 * 24))
+    : 999;
+  
+  const usagePercent = subscription.usageHistory && subscription.usageHistory.length > 0
+    ? Math.round((subscription.usageHistory[subscription.usageHistory.length - 1] / 30) * 100)
+    : 0;
+  
+  const script = `Hi, I've been a loyal customer but my usage has decreased significantly. I've only used ${subscription.name} ${usagePercent}% of the time over the past month. I'd like to continue using the service, but the current price doesn't match my usage. Are there any loyalty discounts, retention offers, or lower-tier plans available?`;
+  
+  const talkingPoints = [
+    `Current usage: Only ${usagePercent}% of the time`,
+    `Last active: ${daysSinceUse} days ago`,
+    `Willing to stay if price is adjusted`,
+    `Mention competitor alternatives`
+  ];
+  
+  const expectedSavings = subscription.monthlyCost * 0.5;
+  
+  return {
+    subscriptionName: subscription.name,
+    script,
+    talkingPoints,
+    expectedSavings
   };
 }
 

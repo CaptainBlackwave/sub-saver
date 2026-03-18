@@ -1,6 +1,7 @@
 import { analyzeSubscriptions, detectZombieCharges } from '../lib/analytics';
 import { TotalBleedCard, StatCard, RenewalCountdown } from '../components/DashboardCards';
 import { SubscriptionList } from '../components/SubscriptionList';
+import { TrialShield, GoalTracker } from '../components/TrialShield';
 
 export default function Home() {
   const stats = analyzeSubscriptions();
@@ -43,8 +44,16 @@ export default function Home() {
       </header>
 
       <main className="max-w-6xl mx-auto px-6 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
-          <TotalBleedCard stats={stats} />
+        <div className="grid grid-cols-1 md:grid-cols-6 gap-4 mb-8">
+          <div className="md:col-span-2">
+            <TotalBleedCard stats={stats} />
+          </div>
+          <StatCard 
+            title="Health Score" 
+            value={stats.healthScore}
+            subtitle={stats.healthScore >= 70 ? 'Excellent' : stats.healthScore >= 40 ? 'Needs work' : 'Critical'}
+            icon="💚"
+          />
           <StatCard 
             title="Monthly Bleed" 
             value={`$${stats.totalMonthly.toFixed(2)}`}
@@ -62,12 +71,6 @@ export default function Home() {
             value={`$${stats.foundMoneyTotal.toFixed(0)}`}
             subtitle="Already saved"
             icon="🎯"
-          />
-          <StatCard 
-            title="Potential Savings" 
-            value={`$${potentialTotalSavings.toFixed(0)}`}
-            subtitle="$/year if optimized"
-            icon="💰"
           />
         </div>
 
@@ -168,6 +171,16 @@ export default function Home() {
                 ))}
               </div>
             </div>
+
+            <TrialShield trials={stats.trials} />
+
+            <GoalTracker 
+              goalName={stats.goalProgress.goalName}
+              targetAmount={stats.goalProgress.targetAmount}
+              currentAmount={stats.goalProgress.currentAmount}
+              percentComplete={stats.goalProgress.percentComplete}
+              ghostsNeeded={stats.goalProgress.ghostsNeeded}
+            />
           </div>
         </div>
       </main>
