@@ -1,9 +1,27 @@
+'use client';
+
+import { useState } from 'react';
 import { analyzeSubscriptions, detectZombieCharges } from '../lib/analytics';
 import { TotalBleedCard, StatCard, RenewalCountdown } from '../components/DashboardCards';
 import { SubscriptionList } from '../components/SubscriptionList';
 import { TrialShield, GoalTracker } from '../components/TrialShield';
+import { OnboardingEmptyState } from '../components/OnboardingEmptyState';
 
 export default function Home() {
+  const [isOnboarded, setIsOnboarded] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem('ghostcheck_onboarded') === 'true';
+  });
+
+  const handleOnboardingComplete = () => {
+    localStorage.setItem('ghostcheck_onboarded', 'true');
+    setIsOnboarded(true);
+  };
+
+  if (!isOnboarded) {
+    return <OnboardingEmptyState onComplete={handleOnboardingComplete} />;
+  }
+
   const stats = analyzeSubscriptions();
   const zombieAlerts = detectZombieCharges();
   
@@ -32,11 +50,17 @@ export default function Home() {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <span className="px-3 py-1.5 bg-amber-100 text-amber-700 text-sm rounded-lg flex items-center gap-1.5">
-                <span>📧</span> Gmail: Not connected
-              </span>
-              <span className="px-3 py-1.5 bg-slate-100 text-slate-600 text-sm rounded-lg">
-                Mock Data
+              <button 
+                onClick={() => {
+                  localStorage.removeItem('ghostcheck_onboarded');
+                  setIsOnboarded(false);
+                }}
+                className="px-3 py-1.5 text-slate-500 hover:text-slate-700 text-sm"
+              >
+                Reconnect
+              </button>
+              <span className="px-3 py-1.5 bg-green-100 text-green-700 text-sm rounded-lg flex items-center gap-1.5">
+                <span>✓</span> Connected
               </span>
             </div>
           </div>
