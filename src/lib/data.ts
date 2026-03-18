@@ -1,0 +1,42 @@
+import { Transaction, Subscription } from '../types/subscriptions';
+
+export const mockTransactions: Transaction[] = [
+  { id: '1', merchantName: 'NETFLIX.COM', amount: 15.99, date: '2026-03-15', category: 'Streaming' },
+  { id: '2', merchantName: 'NETFLIX.COM', amount: 15.99, date: '2026-02-15', category: 'Streaming' },
+  { id: '3', merchantName: 'NETFLIX.COM', amount: 15.99, date: '2026-01-15', category: 'Streaming' },
+  { id: '4', merchantName: 'ADOBE *PHOTOG', amount: 54.99, date: '2026-03-10', category: 'Software' },
+  { id: '5', merchantName: 'ADOBE *CREATIVE', amount: 54.99, date: '2026-02-10', category: 'Software' },
+  { id: '6', merchantName: 'ADOBE *PHOTOG', amount: 54.99, date: '2026-01-10', category: 'Software' },
+  { id: '7', merchantName: 'SPOTIFY PREMIUM', amount: 10.99, date: '2026-03-12', category: 'Music' },
+  { id: '8', merchantName: 'SPOTIFY PREMIUM', amount: 10.99, date: '2026-02-12', category: 'Music' },
+  { id: '9', merchantName: 'SPOTIFY PREMIUM', amount: 10.99, date: '2026-01-12', category: 'Music' },
+  { id: '10', merchantName: 'HULU', amount: 12.99, date: '2026-03-08', category: 'Streaming' },
+  { id: '11', merchantName: 'HULU', amount: 12.99, date: '2026-02-08', category: 'Streaming' },
+  { id: '12', merchantName: 'HULU', amount: 12.99, date: '2026-01-08', category: 'Streaming' },
+  { id: '13', merchantName: 'GYM MEMBER', amount: 49.99, date: '2026-03-01', category: 'Fitness' },
+  { id: '14', merchantName: 'GYM MEMBER', amount: 49.99, date: '2026-02-01', category: 'Fitness' },
+  { id: '15', merchantName: 'GYM MEMBER', amount: 49.99, date: '2026-01-01', category: 'Fitness' },
+  { id: '16', merchantName: 'NOTION LABS', amount: 10.00, date: '2026-03-05', category: 'Productivity' },
+  { id: '17', merchantName: 'NOTION LABS', amount: 10.00, date: '2026-02-05', category: 'Productivity' },
+  { id: '18', merchantName: 'NOTION LABS', amount: 10.00, date: '2026-01-05', category: 'Productivity' },
+  { id: '19', merchantName: 'AMAZON PRIME', amount: 14.99, date: '2026-02-15', category: 'Shopping' },
+  { id: '20', merchantName: 'AMAZON PRIME', amount: 14.99, date: '2026-01-15', category: 'Shopping' },
+  { id: '21', merchantName: 'DISNEY+', amount: 13.99, date: '2026-03-18', category: 'Streaming' },
+  { id: '22', merchantName: 'DISNEY+', amount: 13.99, date: '2026-02-18', category: 'Streaming' },
+  { id: '23', merchantName: 'DISNEY+', amount: 13.99, date: '2026-01-18', category: 'Streaming' },
+  { id: '24', merchantName: 'CHATGPT PLUS', amount: 20.00, date: '2026-03-14', category: 'AI' },
+  { id: '25', merchantName: 'CHATGPT PLUS', amount: 20.00, date: '2026-02-14', category: 'AI' },
+  { id: '26', merchantName: 'CHATGPT PLUS', amount: 20.00, date: '2026-01-14', category: 'AI' },
+];
+
+export const subscriptionTemplates: Subscription[] = [
+  { id: '1', name: 'Netflix', merchantVariants: ['NETFLIX.COM', 'NETFLIX'], monthlyCost: 15.99, billingCycle: 30, nextBillingDate: '2026-04-15', lastUsedDate: '2026-03-17', category: 'Streaming', logo: 'N' },
+  { id: '2', name: 'Adobe Creative Cloud', merchantVariants: ['ADOBE *PHOTOG', 'ADOBE *CREATIVE', 'ADOBE'], monthlyCost: 54.99, billingCycle: 30, nextBillingDate: '2026-04-10', lastUsedDate: '2026-03-01', category: 'Software', logo: 'A' },
+  { id: '3', name: 'Spotify', merchantVariants: ['SPOTIFY PREMIUM', 'SPOTIFY'], monthlyCost: 10.99, billingCycle: 30, nextBillingDate: '2026-04-12', lastUsedDate: '2026-03-18', category: 'Music', logo: 'S' },
+  { id: '4', name: 'Hulu', merchantVariants: ['HULU'], monthlyCost: 12.99, billingCycle: 30, nextBillingDate: '2026-04-08', category: 'Streaming', logo: 'H' },
+  { id: '5', name: 'Gym Membership', merchantVariants: ['GYM MEMBER', 'FITNESS PLUS'], monthlyCost: 49.99, billingCycle: 30, nextBillingDate: '2026-04-01', lastUsedDate: '2026-01-15', category: 'Fitness', logo: 'G' },
+  { id: '6', name: 'Notion', merchantVariants: ['NOTION LABS'], monthlyCost: 10.00, billingCycle: 30, nextBillingDate: '2026-04-05', lastUsedDate: '2026-03-18', category: 'Productivity', logo: 'N' },
+  { id: '7', name: 'Amazon Prime', merchantVariants: ['AMAZON PRIME'], monthlyCost: 14.99, billingCycle: 30, nextBillingDate: '2026-04-15', lastUsedDate: '2026-03-18', category: 'Shopping', logo: 'A' },
+  { id: '8', name: 'Disney+', merchantVariants: ['DISNEY+'], monthlyCost: 13.99, billingCycle: 30, nextBillingDate: '2026-04-18', lastUsedDate: '2026-02-20', category: 'Streaming', logo: 'D' },
+  { id: '9', name: 'ChatGPT Plus', merchantVariants: ['CHATGPT PLUS'], monthlyCost: 20.00, billingCycle: 30, nextBillingDate: '2026-04-14', lastUsedDate: '2026-03-18', category: 'AI', logo: 'C' },
+];
