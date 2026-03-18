@@ -1,5 +1,15 @@
-import { ClusteredSubscription, DashboardStats, Transaction, Subscription, TierOption } from '../types/subscriptions';
+import { ClusteredSubscription, DashboardStats, Transaction, Subscription, TierOption, CategorySpending, ZombieAlert, UserCancellations } from '../types/subscriptions';
 import { mockTransactions, subscriptionTemplates } from './data';
+
+const userCancellations: UserCancellations = {
+  '10': { cancelDate: '2026-03-01', expectedSavings: 155.88 },
+  '5': { cancelDate: '2026-02-15', expectedSavings: 599.88 },
+};
+
+const zombieTransactions: Transaction[] = [
+  { id: 'z1', merchantName: 'HULU', amount: 12.99, date: '2026-03-15', category: 'Streaming' },
+  { id: 'z2', merchantName: 'GYM MEMBER', amount: 49.99, date: '2026-03-01', category: 'Fitness' },
+];
 
 function normalizeMerchantName(name: string): string {
   return name.toUpperCase().replace(/[^A-Z0-9]/g, '').trim();
@@ -94,6 +104,83 @@ export function getDaysUntilRenewal(nextBillingDate: string): number {
   return Math.floor((billing.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
 }
 
+export function calculateCategorySpending(subscriptions: ClusteredSubscription[]): CategorySpending[] {
+  const categoryMap = new Map<string, CategorySpending>();
+  
+  for (const sub of subscriptions) {
+    if (!categoryMap.has(sub.category)) {
+      categoryMap.set(sub.category, {
+        category: sub.category,
+        totalMonthly: 0,
+        subscriptionCount: 0,
+        subscriptions: []
+      });
+    }
+    
+    const cat = categoryMap.get(sub.category)!;
+    cat.totalMonthly += sub.monthlyCost;
+    cat.subscriptionCount += 1;
+    cat.subscriptions.push(sub.name);
+  }
+  
+  const insights: Record<string, string> = {
+    'Streaming': 'You have {count} streaming services. Consider consolidating to save ${savings}/mo.',
+    'Software': 'Review Adobe - downgrade to Photography plan for $35/mo savings.',
+    'Fitness': 'Gym membership unused since January. Potential $600/yr savings.',
+  };
+  
+  const result = Array.from(categoryMap.values()).sort((a, b) => b.totalMonthly - a.totalMonthly);
+  
+  for (const cat of result) {
+    if (cat.category === 'Streaming' && cat.subscriptionCount >= 3) {
+      cat.insight = insights['Streaming']
+        .replace('{count}', cat.subscriptionCount.toString())
+        .replace('{savings}', ((cat.subscriptionCount - 1) * 10).toString());
+    } else if (insights[cat.category]) {
+      cat.insight = insights[cat.category];
+    }
+  }
+  
+  return result;
+}
+
+export function detectZombieCharges(): ZombieAlert[] {
+  const alerts: ZombieAlert[] = [];
+  
+  for (const [subId, cancelInfo] of Object.entries(userCancellations)) {
+    const cancelDate = new Date(cancelInfo.cancelDate);
+    
+    for (const tx of zombieTransactions) {
+      const txDate = new Date(tx.date);
+      if (txDate > cancelDate) {
+        const template = subscriptionTemplates.find(t => t.id === subId);
+        if (template) {
+          alerts.push({
+            subscriptionId: subId,
+            subscriptionName: template.name,
+            originalCharge: cancelInfo.expectedSavings / 12,
+            zombieChargeDate: tx.date,
+            daysSinceCancel: Math.floor((txDate.getTime() - cancelDate.getTime()) / (1000 * 60 * 60 * 24))
+          });
+        }
+      }
+    }
+  }
+  
+  return alerts;
+}
+
+export function calculateFoundMoney(): number {
+  let total = 0;
+  for (const [, cancelInfo] of Object.entries(userCancellations)) {
+    const cancelDate = new Date(cancelInfo.cancelDate);
+    const now = new Date('2026-03-18');
+    const monthsSinceCancel = Math.max(1, Math.floor((now.getTime() - cancelDate.getTime()) / (1000 * 60 * 60 * 24 * 30)));
+    total += cancelInfo.expectedSavings / 12 * monthsSinceCancel;
+  }
+  return total;
+}
+
 export function analyzeSubscriptions(): DashboardStats {
   const clustered = clusterTransactions(mockTransactions);
   
@@ -104,7 +191,17 @@ export function analyzeSubscriptions(): DashboardStats {
     const suggestedTier = findBestTier(sub);
     const potentialSavings = suggestedTier ? suggestedTier.savings : 0;
     
-    return { ...sub, ghostScore, riskScore, status, suggestedTier, potentialSavings };
+    const cancellation = userCancellations[sub.id];
+    
+    return { 
+      ...sub, 
+      ghostScore, 
+      riskScore, 
+      status: cancellation ? 'pending_cancel' as const : status, 
+      suggestedTier, 
+      potentialSavings,
+      cancelDate: cancellation?.cancelDate
+    };
   });
 
   const totalMonthly = analyzed.reduce((sum, sub) => sum + sub.monthlyCost, 0);
@@ -115,13 +212,18 @@ export function analyzeSubscriptions(): DashboardStats {
     .filter(sub => getDaysUntilRenewal(sub.nextBillingDate) <= 48 && getDaysUntilRenewal(sub.nextBillingDate) > 0)
     .sort((a, b) => getDaysUntilRenewal(a.nextBillingDate) - getDaysUntilRenewal(b.nextBillingDate));
 
+  const categorySpending = calculateCategorySpending(analyzed);
+  const foundMoney = calculateFoundMoney();
+
   return {
     totalMonthly,
     totalAnnual,
     subscriptionCount: analyzed.length,
     ghostCount,
     upcomingRenewals,
-    subscriptions: analyzed
+    subscriptions: analyzed,
+    foundMoneyTotal: foundMoney,
+    categorySpending
   };
 }
 

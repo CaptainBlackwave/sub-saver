@@ -1,9 +1,10 @@
-import { analyzeSubscriptions } from '../lib/analytics';
+import { analyzeSubscriptions, detectZombieCharges } from '../lib/analytics';
 import { TotalBleedCard, StatCard, RenewalCountdown } from '../components/DashboardCards';
 import { SubscriptionList } from '../components/SubscriptionList';
 
 export default function Home() {
   const stats = analyzeSubscriptions();
+  const zombieAlerts = detectZombieCharges();
   
   const tierSavings = stats.subscriptions
     .filter(s => s.suggestedTier)
@@ -12,6 +13,8 @@ export default function Home() {
   const ghostSavings = stats.subscriptions
     .filter(s => s.status === 'ghost')
     .reduce((sum, s) => sum + s.monthlyCost * 12, 0);
+
+  const potentialTotalSavings = ghostSavings + tierSavings * 12;
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -40,7 +43,7 @@ export default function Home() {
       </header>
 
       <main className="max-w-6xl mx-auto px-6 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
           <TotalBleedCard stats={stats} />
           <StatCard 
             title="Monthly Bleed" 
@@ -55,8 +58,14 @@ export default function Home() {
             icon="👻"
           />
           <StatCard 
+            title="Found Money" 
+            value={`$${stats.foundMoneyTotal.toFixed(0)}`}
+            subtitle="Already saved"
+            icon="🎯"
+          />
+          <StatCard 
             title="Potential Savings" 
-            value={`$${(ghostSavings + tierSavings * 12).toFixed(0)}`}
+            value={`$${potentialTotalSavings.toFixed(0)}`}
             subtitle="$/year if optimized"
             icon="💰"
           />
@@ -69,6 +78,28 @@ export default function Home() {
           <div>
             <RenewalCountdown subscriptions={stats.upcomingRenewals} />
             
+            {zombieAlerts.length > 0 && (
+              <div className="mt-6 bg-gradient-to-br from-red-100 to-red-50 rounded-xl p-6 border-2 border-red-300">
+                <h3 className="text-lg font-semibold text-red-800 mb-3">🧟 Zombie Alert!</h3>
+                <div className="space-y-3">
+                  {zombieAlerts.map((alert, idx) => (
+                    <div key={idx} className="bg-white rounded-lg p-3 border border-red-200">
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium text-slate-800">{alert.subscriptionName}</span>
+                        <span className="font-bold text-red-600">${alert.originalCharge.toFixed(2)}</span>
+                      </div>
+                      <div className="text-xs text-slate-500 mt-1">
+                        Charged {alert.daysSinceCancel} days after cancel
+                      </div>
+                      <button className="mt-2 w-full px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg">
+                        Dispute Charge
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="mt-6 bg-gradient-to-br from-red-50 to-orange-50 rounded-xl p-6 border border-red-100">
               <h3 className="text-lg font-semibold text-slate-800 mb-3">💀 Vampire Alert</h3>
               {stats.ghostCount > 0 ? (
@@ -115,21 +146,26 @@ export default function Home() {
               </div>
             )}
 
-            <div className="mt-6 bg-slate-800 rounded-xl p-6 text-white">
-              <h3 className="text-lg font-semibold mb-3">🔌 Data Sources</h3>
-              <div className="space-y-2 text-sm">
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-300">Bank Transactions</span>
-                  <span className="text-green-400">✓ Connected</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-300">Gmail Activity</span>
-                  <span className="text-amber-400">Setup Required</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-300">Browser Extension</span>
-                  <span className="text-slate-400">Not installed</span>
-                </div>
+            <div className="mt-6 bg-white rounded-xl p-6 border border-slate-200">
+              <h3 className="text-lg font-semibold text-slate-800 mb-4">📊 The Stack</h3>
+              <div className="space-y-3">
+                {stats.categorySpending.map(cat => (
+                  <div key={cat.category}>
+                    <div className="flex items-center justify-between text-sm mb-1">
+                      <span className="text-slate-700">{cat.category}</span>
+                      <span className="font-semibold text-slate-800">${cat.totalMonthly.toFixed(0)}/mo</span>
+                    </div>
+                    <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-slate-800 rounded-full"
+                        style={{ width: `${(cat.totalMonthly / stats.totalMonthly) * 100}%` }}
+                      />
+                    </div>
+                    {cat.insight && (
+                      <p className="text-xs text-slate-500 mt-1">{cat.insight}</p>
+                    )}
+                  </div>
+                ))}
               </div>
             </div>
           </div>

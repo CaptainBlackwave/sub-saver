@@ -33,9 +33,10 @@ export interface ClusteredSubscription extends Subscription {
   totalSpent: number;
   ghostScore: number;
   riskScore: number;
-  status: 'active' | 'ghost' | 'warning' | 'healthy';
+  status: 'active' | 'ghost' | 'warning' | 'healthy' | 'pending_cancel' | 'zombie';
   suggestedTier?: TierOption;
   potentialSavings?: number;
+  cancelDate?: string;
 }
 
 export interface DashboardStats {
@@ -45,4 +46,29 @@ export interface DashboardStats {
   ghostCount: number;
   upcomingRenewals: ClusteredSubscription[];
   subscriptions: ClusteredSubscription[];
+  foundMoneyTotal: number;
+  categorySpending: CategorySpending[];
+}
+
+export interface CategorySpending {
+  category: string;
+  totalMonthly: number;
+  subscriptionCount: number;
+  subscriptions: string[];
+  insight?: string;
+}
+
+export interface ZombieAlert {
+  subscriptionId: string;
+  subscriptionName: string;
+  originalCharge: number;
+  zombieChargeDate: string;
+  daysSinceCancel: number;
+}
+
+export interface UserCancellations {
+  [subscriptionId: string]: {
+    cancelDate: string;
+    expectedSavings: number;
+  };
 }

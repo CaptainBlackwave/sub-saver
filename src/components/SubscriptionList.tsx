@@ -1,6 +1,7 @@
 import { ClusteredSubscription } from '../types/subscriptions';
 import { StatusBadge } from './StatusBadge';
 import { KillButton, DowngradeButton } from './ActionButtons';
+import { UsageTrend } from './Sparkline';
 import { getDaysUntilRenewal } from '../lib/analytics';
 
 function getDaysSinceLastUse(lastUsedDate?: string): number {
@@ -26,8 +27,8 @@ function RiskIndicator({ score }: { score: number }) {
 
 export function SubscriptionList({ subscriptions }: { subscriptions: ClusteredSubscription[] }) {
   const sortedSubs = [...subscriptions].sort((a, b) => {
-    const statusOrder = { ghost: 0, warning: 1, active: 2, healthy: 3 };
-    return statusOrder[a.status] - statusOrder[b.status];
+    const statusOrder: Record<string, number> = { zombie: 0, ghost: 1, warning: 2, pending_cancel: 3, active: 4, healthy: 5 };
+    return (statusOrder[a.status] ?? 4) - (statusOrder[b.status] ?? 4);
   });
 
   return (
@@ -54,6 +55,7 @@ export function SubscriptionList({ subscriptions }: { subscriptions: ClusteredSu
                   </div>
                 </div>
                 <div className="flex items-center gap-4">
+                  <UsageTrend usageHistory={sub.usageHistory} lastUsedDate={sub.lastUsedDate} />
                   <div className="text-right">
                     <div className="font-bold text-slate-800">${sub.monthlyCost}</div>
                     <div className="text-xs text-slate-500">per month</div>
